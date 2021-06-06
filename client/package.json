@@ -6,7 +6,7 @@
   "scripts": {
     "start": "nodemon index.js"
   },
-  "author": "Rafael Nunes Santana",
+  "author": "Rafael Nunes Santana, Verônica Bertolucci Scilewski e Lucas Costa Souza",
   "license": "GPL-3.0",
   "dependencies": {
     "socket.io-client": "^4.1.2"

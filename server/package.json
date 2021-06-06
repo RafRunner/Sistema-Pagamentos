@@ -6,7 +6,7 @@
   "scripts": {
     "start": "nodemon index.js"
   },
-  "author": "Rafael Nunes Santana",
+  "author": "Rafael Nunes Santana, Verônica Bertolucci Scilewski e Lucas Costa Souza",
   "license": "GPL-3.0",
   "dependencies": {
     "bcrypt": "^5.0.1",
