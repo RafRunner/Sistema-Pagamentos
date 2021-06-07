@@ -13,8 +13,12 @@ socket.on('connect', () => {
 	// 	console.log(resposta.mensagem);
 	// });
 
+	// socket.emit('registrar_usuario', 'Verônica Bertolucci Scilewski', 'Banco Finanças', '654321', '01', '1234 1234 1234 1234', 'teste456', '100', (resposta) => {
+	// 	console.log(resposta.mensagem);
+	// });
+
 	if (!logado) {
-		socket.emit('login', '123456', 'teste123', (respostaLogin) => {
+		socket.emit('login', '654321', 'teste456', (respostaLogin) => {
 			console.log(respostaLogin.mensagem);
 	
 			if (!respostaLogin.sucesso) {
@@ -39,6 +43,13 @@ function setUpSocketUsuario(token) {
 	userSocket.on('connect_error', (error) => {
 		console.log('Erro ao conectar no socket de usuário: ' + error);
 	});
+
+	userSocket.on('receber_cobranca', (remetente, valor, callback) => {
+		console.log(remetente);
+		console.log(valor);
+	});
 	
 	userSocket.emit('deposito', -100, (mensagem) => console.log(mensagem));
+
+	userSocket.emit('fazer_cobranca', 654321, 200, (mensagem) => console.log(mensagem));
 }

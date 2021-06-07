@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const usuarioService = require('./src/services/usuarioService');
+const cobrancaService = require('./src/services/cobrancaService');
+const receberCobranca = require('./src/routes/receberCobranca');
 
 const porta = process.env.PORT || 3333;
 
@@ -68,7 +70,26 @@ userIo.on('connection', (socket) => {
 
 	console.log('Usuário da conta ' + usuario.numeroConta + ' conectado');
 
-	socket.on('disconnect', function(){
+	cobrancaService.getCobrancasPendentes(usuario.numeroConta).then(cobrancasPendentes => {
+
+		cobrancasPendentes.forEach(cobranca => {
+			usuarioService.getByNumeroConta(cobranca.idRemetente).then(remetente => {
+				const socketRemetente = usuariosOnline.get(remetente.numeroConta);
+
+				const remetenteResumido = {
+					id: remetente.id,
+					numeroConta: remetente.numeroConta,
+					nome: remetente.nome,
+				};
+		
+				socket.emit('receber_cobranca', remetenteResumido, cobranca.valor, (autorizado, senha, callbackDest) => {
+					receberCobranca(socketRemetente, autorizado, senha, callbackDest);
+				});
+			});
+		});
+	});
+
+	socket.on('disconnect', () => {
 		console.log('Usuário da conta ' + usuario.numeroConta + ' desconectado');
 		usuariosOnline.delete(usuario.numeroConta);
 	});
@@ -77,41 +98,37 @@ userIo.on('connection', (socket) => {
 		usuarioService.deposito(usuario.numeroConta, valor).then(resultado => callback(resultado));
 	});
 
-	socket.on('fazer-cobranca', (nContaDestinatario, valor, callback) => {
-		const sDestinatario = usuariosOnline.get(nContaDestinatario);
-
-		// TODO possibilitar mandar cobraça para usuários offline
-		if (!sDestinatario) {
-			callback({ sucesso: false, mensagem: 'Destinatário não está online' });
+	socket.on('fazer_cobranca', (nContaDestinatario, valor, callback) => {
+		if (valor <= 0) {
+			callback({ sucesso: false, mensagem: 'A valor da cobrança deve ser maior que zero' });
 			return;
 		}
 
-		if (sDestinatario == socket) {
-			callback({ sucesso: false, mensagem: 'Não é possível enviar cobrança para você mesmo' });
-			return;
-		}
-
-		sDestinatario.emit('receber-cobranca', usuario, valor, (autorizado, senha, callbackDest) => {
-			if (!autorizado) {
-				socket.emit('resultado-cobranca', `Sua cobrança para ${sDestinatario.usuario.nome} da conta ${sDestinatario.usuario.numeroConta} foi recusada`);
-				callbackDest({ sucesso: true, mensagem: 'Você recusou a cobrança' });
+		usuarioService.getByNumeroConta(nContaDestinatario).then(destinatario => {
+			if (!destinatario) {
+				callback({ sucesso: false, mensagem: 'Número de conta informado não corresponde a nenhuma registrada' });
 				return;
 			}
 
-			usuarioService.getByNumeroConta(sDestinatario).then(destinatario => {
-				if (!destinatario || !bcrypt.compareSync(senha, destinatario.senha)) {
-					callbackDest({ sucesso: false, mensagem: 'Erro de autentificação' });
-					return;
-				}
+			if (destinatario.id == usuario.id) {
+				callback({ sucesso: false, mensagem: 'Não é possível enviar cobrança para você mesmo' });
+				return;
+			}
 
-				usuarioService.transferencia(nContaDestinatario, usuario.numeroConta, valor).then(resultado => {
-					socket.emit('resultado-cobranca', `Sua cobraça de ${valor} para ${sDestinatario.usuario.nome} da conta ${sDestinatario.usuario.numeroConta} foi paga`);
-					callbackDest(resultado);
-				});
+			const sDestinatario = usuariosOnline.get(nContaDestinatario);
+
+			if (!sDestinatario) {
+				cobrancaService.criaCobranca(usuario.numeroConta, destinatario.numeroConta, valor);
+				callback({ sucesso: true, mensagem: 'Cobrança enviada com sucesso' });
+				return;
+			}
+
+			sDestinatario.emit('receber_cobranca', usuario, valor, (autorizado, senha, callbackDest) => {
+				receberCobranca(socket, autorizado, senha, callbackDest);
 			});
-		});
 
-		callback({ sucesso: true, mensagem: 'Cobrança enviada com sucesso' });
+			callback({ sucesso: true, mensagem: 'Cobrança enviada com sucesso' });
+		});
 	});
 
 	socket.on('transferir', (destinatario, valor, callback) => {
