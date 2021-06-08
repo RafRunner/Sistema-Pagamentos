@@ -5,12 +5,17 @@ const cobrancaService = require('./src/services/cobrancaService');
 const receberCobranca = require('./src/routes/receberCobranca');
 
 const porta = process.env.PORT || 3333;
+const enderecoCliente = process.env.CLIENT_ADDR || 'http://localhost:8080';
 
-const io = require('socket.io')(porta);
+const io = require('socket.io')(porta, {
+	cors: {
+		origin: enderecoCliente,
+	}
+});
 const userIo = io.of('/user');
 
 io.on('connection', (socket) => {
-	console.log(socket.id);
+	console.log('Cliente conectado com id: ' + socket.id);
 
 	socket.on('registrar_usuario', (nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial, callback) => {
 		usuarioService.create(nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial).then(resultado => {

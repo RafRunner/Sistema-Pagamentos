@@ -1,17 +1,21 @@
 {
-  "name": "sistema-pagamentos-client",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "start": "nodemon index.js"
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
   },
   "author": "Rafael Nunes Santana, Verônica Bertolucci Scilewski e Lucas Costa Souza",
   "license": "GPL-3.0",
   "dependencies": {
-    "socket.io-client": "^4.1.2"
+    "core-js": "^3.6.5",
+    "socket.io-client": "^4.1.2",
+    "vue": "^3.0.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.7"
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/compiler-sfc": "^3.0.0"
   }
 }
