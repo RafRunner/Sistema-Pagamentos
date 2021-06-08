@@ -5,12 +5,14 @@
 </template>
 
 <script>
+import { nomeAplicacao } from '../constantes';
+
 export default {
 	name: 'Cabecalho',
 	props: {
 		titulo: {
 			type: String,
-			default: 'Banco Finanças',
+			default: nomeAplicacao,
 		},
 	},
 }

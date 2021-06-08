@@ -14,6 +14,10 @@ module.exports = {
 	},
 
 	async create(nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial) {
+		if (!nome || !banco || !numeroConta || !numeroAgencia || !numeroCartao || !senha || !saldoInicial) {
+			return { sucesso: false, mensagem: 'Por favor, informe todos os dados necessários' }
+		}
+
 		if (saldoInicial < 0) {
 			return { sucesso: false, mensagem: 'Saldo inicial não pode ser negativo' };
 		}

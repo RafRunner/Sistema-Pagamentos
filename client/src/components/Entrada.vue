@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<label><b>{{ titulo }}</b></label>
-		<input :type=tipo>
+		<input :type=tipo v-model="valor" >
 	</div>
 </template>
 
@@ -13,6 +13,16 @@ export default {
 		tipo: {
 			type: String,
 			default: 'text',
+		}
+	},
+	data() {
+		return {
+			valor: "",
+		}
+	},
+	methods: {
+		getValor() {
+			return this.valor;
 		},
 	},
 }
