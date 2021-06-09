@@ -13,7 +13,7 @@ export default {
 		tipo: {
 			type: String,
 			default: 'text',
-		}
+		},
 	},
 	data() {
 		return {
