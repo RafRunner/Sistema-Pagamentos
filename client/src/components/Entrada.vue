@@ -24,6 +24,9 @@ export default {
 		getValor() {
 			return this.valor;
 		},
+		limpar() {
+			this.valor = "";
+		}
 	},
 }
 </script>

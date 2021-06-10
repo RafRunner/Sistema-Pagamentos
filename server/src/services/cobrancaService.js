@@ -4,6 +4,10 @@ const connection = require('../database/connection');
 const nomeTabela = 'cobranca';
 
 module.exports = {
+	async get(id) {
+		return serviceHelper.get(nomeTabela, id);
+	},
+
 	async criaCobranca(idRemetente, idDestinatario, valor) {
 		const cobranca = {
 			idRemetente,
@@ -11,7 +15,9 @@ module.exports = {
 			valor,
 		};
 		
-		await serviceHelper.create(nomeTabela, cobranca);
+		const { id } = await serviceHelper.create(nomeTabela, cobranca);
+
+		return id;
 	},
 
 	async getCobrancasPendentes(idUsuario) {
@@ -24,7 +30,7 @@ module.exports = {
 	},
 
 	async registrarRespostaCobranca(idCobranca, pagou) {
-		await connection.where('id', idCobranca).update({
+		await connection(nomeTabela).where('id', idCobranca).update({
 			respondida: true,
 			paga: pagou,
 		});

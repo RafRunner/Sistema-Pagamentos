@@ -60,11 +60,11 @@ module.exports = {
 		}
 		const conta = await this.getByNumeroConta(numeroConta);
 
-		connection(nomeTabela).where('id', conta.id).update({
+		await connection(nomeTabela).where('id', conta.id).update({
 			balanco: conta.balanco + valor
 		});
 
-		return { sucesso: true, novoBalanco: conta.balanco + valor }
+		return { sucesso: true,  mensagem: 'Depósito realizada com suceeso', novoBalanco: conta.balanco + valor }
 	},
 
 	async transferencia(nContaRemetente, nContaDestinatario, valor) {
@@ -88,9 +88,13 @@ module.exports = {
 		});
 
 		await connection(nomeTabela).where('id', contaDestinatario.id).update({
-			balanco: contaRemetente.balanco + valor
+			balanco: contaDestinatario.balanco + valor
 		});
 
-		return { sucesso: true, novoBalanco: contaRemetente.balanco - valor }
+		return { 
+			sucesso: true, 
+			mensagem: `Transferência de ${valor} cetavos para conta ${nContaDestinatario} realizada com suceeso`, 
+			novoBalanco: contaRemetente.balanco - valor,
+		}
 	}
 }

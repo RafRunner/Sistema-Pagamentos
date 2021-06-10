@@ -46,6 +46,7 @@ body {
 
 .container {
 	max-width: 500px;
+	min-width: 350px;
 	margin: 30px auto;
 	overflow: auto;
 	border: 5px solid #fff;
