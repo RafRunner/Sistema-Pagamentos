@@ -52,7 +52,7 @@ module.exports = {
 		return { sucesso: false, mensagem: 'Usuário não existe' };
 	},
 
-	// Nessas funções podemos ter certeza que a conta que está iniciando a transação existe (pela autentificação de sugurança)
+	// Nessas funções podemos ter certeza que a conta que está iniciando a transação existe (pela autenticação de sugurança)
 	// mas temos que verificar as outras contas
 	async deposito(numeroConta, valor) {
 		if (valor <= 0) {
@@ -93,7 +93,7 @@ module.exports = {
 
 		return { 
 			sucesso: true, 
-			mensagem: `Transferência de ${valor} cetavos para conta ${nContaDestinatario} realizada com suceeso`, 
+			mensagem: `Transferência de ${valor} centavos para conta ${nContaDestinatario} realizada com suceeso`, 
 			novoBalanco: contaRemetente.balanco - valor,
 		}
 	}

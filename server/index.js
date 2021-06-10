@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
 
 		usuarioService.getByNumeroConta(numeroConta).then(usuario => {
 			if (!usuario || !bcrypt.compareSync(senha, usuario.senha)) {
-				callback({ sucesso: false, mensagem: 'Erro de autentificação' });
+				callback({ sucesso: false, mensagem: 'Erro de autenticação' });
 				return;
 			}
 	
@@ -60,7 +60,7 @@ userIo.use((socket, next) => {
 	const token = socket.handshake.auth.token;
 
 	if (!token) {
-		next(new Error('Erro de autentificação sem token'));
+		next(new Error('Erro de autenticação sem token'));
 		return;
 	}
 
@@ -69,7 +69,7 @@ userIo.use((socket, next) => {
 		socket.usuario = decode;
 		next();
 	} catch {
-		next(new Error('Erro de autentificação token inválido'));
+		next(new Error('Erro de autenticação token inválido'));
 		return;
 	}
 });
@@ -169,9 +169,8 @@ userIo.on('connection', (socket) => {
 
 			if (resultado.sucesso) {
 				if (usuariosOnline.get(destinatario)) {
-					usuariosOnline.get(destinatario)
-					.emit('atualizacao_saldo', 
-					`Você recebeu uma transferência de ${usuario.nome} no valor de ${valor} centavos`,
+					usuariosOnline.get(destinatario).emit('atualizacao_saldo', 
+					`Você recebeu uma transferência de ${usuario.nome} no valor de ${valor} centavos`, 
 					valor);
 				}
 			}
