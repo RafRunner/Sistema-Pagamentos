@@ -10,7 +10,7 @@ const enderecoCliente = process.env.CLIENT_ADDR || 'http://localhost:8080';
 const io = require('socket.io')(porta, {
 	cors: {
 		origin: enderecoCliente,
-	}
+	},
 });
 
 const userIo = io.of('/user');
@@ -29,15 +29,20 @@ io.on('connection', (socket) => {
 		console.log('Cliente desconectado com id: ' + socket.id);
 	});
 
-	socket.on('registrar_usuario', (nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial, callback) => {
-		usuarioService.create(nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial).then(resultado => {
-			if (resultado.sucesso) {
-				resultado.token = criaJwt(resultado.id, numeroConta, nome);
-			}
+	socket.on(
+		'registrar_usuario',
+		(nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial, callback) => {
+			usuarioService
+				.create(nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial)
+				.then((resultado) => {
+					if (resultado.sucesso) {
+						resultado.token = criaJwt(resultado.id, numeroConta, nome);
+					}
 
-			callback(resultado);
-		});
-	});
+					callback(resultado);
+				});
+		}
+	);
 
 	socket.on('login', (numeroConta, senha, callback) => {
 		if (!numeroConta || !senha) {
@@ -45,13 +50,17 @@ io.on('connection', (socket) => {
 			return;
 		}
 
-		usuarioService.getByNumeroConta(numeroConta).then(usuario => {
+		usuarioService.getByNumeroConta(numeroConta).then((usuario) => {
 			if (!usuario || !bcrypt.compareSync(senha, usuario.senha)) {
 				callback({ sucesso: false, mensagem: 'Erro de autenticação' });
 				return;
 			}
-	
-			callback({ sucesso: true, mensagem: 'Login feito com sucesso', token: criaJwt(usuario.id, usuario.numeroConta, usuario.nome) });
+
+			callback({
+				sucesso: true,
+				mensagem: 'Login feito com sucesso',
+				token: criaJwt(usuario.id, usuario.numeroConta, usuario.nome),
+			});
 		});
 	});
 });
@@ -82,48 +91,51 @@ userIo.on('connection', (socket) => {
 	usuariosOnline.set(usuario.numeroConta, socket);
 
 	console.log('Usuário da conta ' + usuario.numeroConta + ' conectado');
-	
+
 	socket.on('disconnect', () => {
 		console.log('Usuário da conta ' + usuario.numeroConta + ' desconectado');
 		usuariosOnline.delete(usuario.numeroConta);
 	});
 
 	socket.on('ver_conta', (callback) => {
-		usuarioService.get(socket.usuario.id).then(usuario => {
+		usuarioService.get(socket.usuario.id).then((usuario) => {
 			callback(usuario);
 		});
 	});
 
 	socket.on('ver_cobrancas', () => {
-		cobrancaService.getCobrancasPendentes(usuario.id).then(cobrancasPendentes => {
+		(async () => {
+			const cobrancasPendentes = await cobrancaService.getCobrancasPendentes(usuario.id);
 
-			cobrancasPendentes.forEach(cobranca => {
-				usuarioService.get(cobranca.idRemetente).then(remetente => {
-					const remetenteResumido = {
-						id: remetente.id,
-						numeroConta: remetente.numeroConta,
-						nome: remetente.nome,
-					};
-	
-					const cobrancaResposta = { usuario: remetenteResumido, valor: cobranca.valor, id: cobranca.id };
+			for (const cobranca of cobrancasPendentes) {
+				const remetente = await usuarioService.get(cobranca.idRemetente);
 
-					socket.emit('receber_cobranca', cobrancaResposta);
-				});
-			});
-		});
+				const remetenteResumido = {
+					id: remetente.id,
+					numeroConta: remetente.numeroConta,
+					nome: remetente.nome,
+				};
+
+				const cobrancaResposta = { usuario: remetenteResumido, valor: cobranca.valor, id: cobranca.id };
+
+				socket.emit('receber_cobranca', cobrancaResposta);
+			}
+		})();
 	});
 
 	socket.on('deposito', (valor, callback) => {
-		usuarioService.deposito(usuario.numeroConta, valor).then(resultado => callback(resultado));
+		usuarioService.deposito(usuario.numeroConta, valor).then((resultado) => callback(resultado));
 	});
 
 	socket.on('fazer_cobranca', (nContaDestinatario, valor, callback) => {
-		if (valor <= 0) {
-			callback({ sucesso: false, mensagem: 'A valor da cobrança deve ser maior que zero' });
-			return;
-		}
+		(async () => {
+			if (valor <= 0) {
+				callback({ sucesso: false, mensagem: 'A valor da cobrança deve ser maior que zero' });
+				return;
+			}
 
-		usuarioService.getByNumeroConta(nContaDestinatario).then(destinatario => {
+			const destinatario = await usuarioService.getByNumeroConta(nContaDestinatario);
+
 			if (!destinatario) {
 				callback({ sucesso: false, mensagem: 'Número de conta informado não corresponde a nenhuma registrada' });
 				return;
@@ -134,24 +146,24 @@ userIo.on('connection', (socket) => {
 				return;
 			}
 
-			cobrancaService.criaCobranca(usuario.id, destinatario.id, valor).then(id => {
-				if (!id) {
-					callback({ sucesso: false, mensagem: 'Erro ao criar cobrança' });
-					return;
-				}
+			const id = await cobrancaService.criaCobranca(usuario.id, destinatario.id, valor);
 
-				const sDestinatario = usuariosOnline.get(nContaDestinatario);
+			if (!id) {
+				callback({ sucesso: false, mensagem: 'Erro ao criar cobrança' });
+				return;
+			}
 
-				if (!sDestinatario) {
-					callback({ sucesso: true, mensagem: 'Cobrança enviada com sucesso' });
-					return;
-				}
-	
-				sDestinatario.emit('receber_cobranca', { usuario, valor, id });
-	
+			const sDestinatario = usuariosOnline.get(nContaDestinatario);
+
+			if (!sDestinatario) {
 				callback({ sucesso: true, mensagem: 'Cobrança enviada com sucesso' });
-			});
-		});
+				return;
+			}
+
+			sDestinatario.emit('receber_cobranca', { usuario, valor, id });
+
+			callback({ sucesso: true, mensagem: 'Cobrança enviada com sucesso' });
+		})();
 	});
 
 	socket.on('responder_cobranca', (idCobranca, numeroContaRemetente, autorizado, senha, callback) => {
@@ -160,19 +172,21 @@ userIo.on('connection', (socket) => {
 
 	socket.on('transferir', (destinatario, valor, callback) => {
 		if (destinatario == usuario.numeroConta) {
-			callback( { sucesso: false, mensagem: 'Não é possível transferir para você mesmo' } );
+			callback({ sucesso: false, mensagem: 'Não é possível transferir para você mesmo' });
 			return;
 		}
 
-		usuarioService.transferencia(usuario.numeroConta, destinatario, valor).then(resultado => {
+		usuarioService.transferencia(usuario.numeroConta, destinatario, valor).then((resultado) => {
 			callback(resultado);
 
-			if (resultado.sucesso) {
-				if (usuariosOnline.get(destinatario)) {
-					usuariosOnline.get(destinatario).emit('atualizacao_saldo', 
-					`Você recebeu uma transferência de ${usuario.nome} no valor de ${valor} centavos`, 
-					valor);
-				}
+			if (resultado.sucesso && usuariosOnline.get(destinatario)) {
+				usuariosOnline
+					.get(destinatario)
+					.emit(
+						'atualizacao_saldo',
+						`Você recebeu uma transferência de ${usuario.nome} no valor de ${valor} centavos`,
+						valor
+					);
 			}
 		});
 	});
