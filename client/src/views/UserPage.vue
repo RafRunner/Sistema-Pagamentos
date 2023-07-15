@@ -43,6 +43,8 @@
 				/>
 			</div>
 		</div>
+
+		<Botao style="margin-bottom: 40px;" titulo="Logout" v-on:click="logout"/>
 	</div>
 </template>
 
@@ -51,7 +53,7 @@ import Cabecalho from '../components/Cabecalho.vue';
 import Entrada from '../components/Entrada.vue';
 import Botao from '../components/Botao.vue';
 import Cobrancas from '../components/Cobrancas.vue';
-import { getUserSocket } from '../io/userSocket';
+import { getUserSocket, disconnect } from '../io/userSocket';
 
 let userSocket;
 let balanco = 0;
@@ -166,6 +168,10 @@ export default {
 			userSocket.emit('responder_cobranca', id, cobranca.usuario.numeroConta, false, '', (resposta) => {
 				alert(resposta.mensagem);
 			});
+		},
+		logout() {
+			disconnect();
+			this.$router.push('/');
 		},
 	},
 }

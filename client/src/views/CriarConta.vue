@@ -2,7 +2,7 @@
 	<div>
 		<Cabecalho titulo="Faça seu cadastro" />
 
-		<form @submit="criarUsuario" class="container">
+		<form @submit.prevent="criarUsuario" class="container">
 			<Logo />
 
 			<Entrada ref="entNome" titulo="Nome" />
@@ -13,7 +13,7 @@
 			<Entrada ref="entSaldoInicial" titulo="Saldo Inicial" tipo="number" />
 			<Entrada ref="entSenha" titulo="Senha" tipo="password" />
 
-			<Botao titulo="Criar Conta" v-on:click="criarUsuario()" />
+			<Botao titulo="Criar Conta" v-on:click="criarUsuario" />
 		</form>
 	</div>
 </template>
@@ -32,10 +32,10 @@ export default {
 		Entrada,
 		Botao,
 		Cabecalho,
-		Logo,
+		Logo
 	},
 	methods: {
-		criarUsuario () {
+		criarUsuario() {
 			const nome = this.$refs.entNome.getValor();
 			const banco = this.$refs.entBanco.getValor();
 			const numeroConta = this.$refs.entNumeroConta.getValor();
@@ -44,15 +44,25 @@ export default {
 			const saldoInicial = this.$refs.entSaldoInicial.getValor();
 			const senha = this.$refs.entSenha.getValor();
 
-			socket.emit('registrar_usuario', nome, banco, numeroConta, numeroAgencia, cartao, senha, saldoInicial, (resposta) => {
-				alert(resposta.mensagem);
+			socket.emit(
+				'registrar_usuario',
+				nome,
+				banco,
+				numeroConta,
+				numeroAgencia,
+				cartao,
+				senha,
+				saldoInicial,
+				resposta => {
+					alert(resposta.mensagem);
 
-				if (resposta.sucesso) {
-					createUserSocket(resposta.token);
-					this.$router.push('userpage');
+					if (resposta.sucesso) {
+						createUserSocket(resposta.token);
+						this.$router.push('userpage');
+					}
 				}
-			});
-		},
-	},
-}
+			);
+		}
+	}
+};
 </script>

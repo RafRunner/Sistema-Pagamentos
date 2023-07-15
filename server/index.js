@@ -1,8 +1,11 @@
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const usuarioService = require('./src/services/usuarioService');
 const cobrancaService = require('./src/services/cobrancaService');
 const responderCobranca = require('./src/routes/responderCobranca');
+const { criaJwt, verificaToken } = require('./src/auth/jwt');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const porta = process.env.PORT || 3333;
 const enderecoCliente = process.env.CLIENT_ADDR || 'http://localhost:8080';
@@ -14,13 +17,6 @@ const io = require('socket.io')(porta, {
 });
 
 const userIo = io.of('/user');
-
-function criaJwt(id, numeroConta, nome) {
-	const payload = { id, numeroConta, nome };
-	const token = jwt.sign(payload, process.env.JWT_KEY, { expiresIn: '1h' });
-
-	return token;
-}
 
 io.on('connection', (socket) => {
 	console.log('Cliente conectado com id: ' + socket.id);
@@ -74,7 +70,7 @@ userIo.use((socket, next) => {
 	}
 
 	try {
-		const decode = jwt.verify(token, process.env.JWT_KEY);
+		const decode = verificaToken(token);
 		socket.usuario = decode;
 		next();
 	} catch {
