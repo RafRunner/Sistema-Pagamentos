@@ -4,6 +4,10 @@ const cobrancaService = require('../services/cobrancaService');
 
 module.exports = (socketRemetente, idCobranca, autorizado, senha, callback) => {
 	(async () => {
+		const cobranca = await cobrancaService.get(idCobranca);
+		const remetente = await usuarioService.get(cobranca.idRemetente);
+		const destinatario = await usuarioService.get(cobranca.idDestinatario);
+
 		if (!autorizado) {
 			await cobrancaService.registrarRespostaCobranca(idCobranca, false);
 			if (socketRemetente) {
@@ -19,10 +23,6 @@ module.exports = (socketRemetente, idCobranca, autorizado, senha, callback) => {
 			});
 			return;
 		}
-
-		const cobranca = await cobrancaService.get(idCobranca);
-		const remetente = await usuarioService.get(cobranca.idRemetente);
-		const destinatario = await usuarioService.get(cobranca.idDestinatario);
 
 		if (!bcrypt.compareSync(senha, destinatario.senha)) {
 			callback({ sucesso: false, mensagem: 'Erro de autenticação' });
