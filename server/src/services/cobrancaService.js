@@ -14,7 +14,7 @@ module.exports = {
 			idDestinatario,
 			valor,
 		};
-		
+
 		const { id } = await serviceHelper.create(nomeTabela, cobranca);
 
 		return id;
@@ -34,5 +34,5 @@ module.exports = {
 			respondida: true,
 			paga: pagou,
 		});
-	}
-}
+	},
+};

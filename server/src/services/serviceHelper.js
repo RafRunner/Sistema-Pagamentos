@@ -32,5 +32,5 @@ module.exports = {
 		await connection(nomeTabela).where(id).del();
 
 		return { sucesso: true };
-	}
-}
+	},
+};

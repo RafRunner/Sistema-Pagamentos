@@ -15,7 +15,7 @@ module.exports = {
 
 	async create(nome, banco, numeroConta, numeroAgencia, numeroCartao, senha, saldoInicial) {
 		if (!nome || !banco || !numeroConta || !numeroAgencia || !numeroCartao || !senha || !saldoInicial) {
-			return { sucesso: false, mensagem: 'Por favor, informe todos os dados necessários' }
+			return { sucesso: false, mensagem: 'Por favor, informe todos os dados necessários' };
 		}
 
 		if (saldoInicial < 0) {
@@ -31,7 +31,7 @@ module.exports = {
 			numeroAgencia,
 			numeroCartao,
 			senha: senhaCriptografada,
-			balanco: saldoInicial
+			balanco: saldoInicial,
 		};
 
 		const resultado = await serviceHelper.create(nomeTabela, usuario);
@@ -60,41 +60,47 @@ module.exports = {
 		}
 		const conta = await this.getByNumeroConta(numeroConta);
 
-		await connection(nomeTabela).where('id', conta.id).update({
-			balanco: conta.balanco + valor
-		});
+		await connection(nomeTabela)
+			.where('id', conta.id)
+			.update({
+				balanco: conta.balanco + valor,
+			});
 
-		return { sucesso: true,  mensagem: 'Depósito realizada com suceeso', novoBalanco: conta.balanco + valor }
+		return { sucesso: true, mensagem: 'Depósito realizada com suceeso', novoBalanco: conta.balanco + valor };
 	},
 
 	async transferencia(nContaRemetente, nContaDestinatario, valor) {
 		if (valor <= 0) {
-			return { sucesso: false, mensagem: 'Valor da transferência deve ser maior que 0' }
+			return { sucesso: false, mensagem: 'Valor da transferência deve ser maior que 0' };
 		}
 
 		const contaRemetente = await this.getByNumeroConta(nContaRemetente);
 		const contaDestinatario = await this.getByNumeroConta(nContaDestinatario);
 
 		if (!contaDestinatario) {
-			return { sucesso: false, mensagem: 'Conta destinatária não existe' }
+			return { sucesso: false, mensagem: 'Conta destinatária não existe' };
 		}
 
 		if (contaRemetente.balanco < valor) {
-			return { sucesso: false, mensagem: 'Saldo insuficiente para realizar transferência' }
+			return { sucesso: false, mensagem: 'Saldo insuficiente para realizar transferência' };
 		}
 
-		await connection(nomeTabela).where('id', contaRemetente.id).update({
-			balanco: contaRemetente.balanco - valor
-		});
+		await connection(nomeTabela)
+			.where('id', contaRemetente.id)
+			.update({
+				balanco: contaRemetente.balanco - valor,
+			});
 
-		await connection(nomeTabela).where('id', contaDestinatario.id).update({
-			balanco: contaDestinatario.balanco + valor
-		});
+		await connection(nomeTabela)
+			.where('id', contaDestinatario.id)
+			.update({
+				balanco: contaDestinatario.balanco + valor,
+			});
 
-		return { 
-			sucesso: true, 
-			mensagem: `Transferência de ${valor} centavos para conta ${nContaDestinatario} realizada com suceeso`, 
+		return {
+			sucesso: true,
+			mensagem: `Transferência de ${valor} centavos para conta ${nContaDestinatario} realizada com suceeso`,
 			novoBalanco: contaRemetente.balanco - valor,
-		}
-	}
-}
+		};
+	},
+};
